@@ -30,7 +30,31 @@ import (
 	"github.com/songquanpeng/one-api/relay/relaymode"
 )
 
+// contains 辅助函数判断元素是否存在于数组中
+func contains(arr []string, target string) bool {
+	for _, val := range arr {
+		if val == target {
+			return true
+		}
+	}
+	return false
+}
+
 func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
+	// 定义视觉模型
+	vlModels := []string{
+		"glm-4v",
+		"qwen-vl-chat",
+		"internvl-chat",
+		"llava",
+		"gpt-4o",
+		"cogvlm2",
+		"deepseek-vl-chat",
+		"MiniCPM-Llama3-V-2_5",
+		"OmniLMM",
+		"yi-vl-chat",
+	}
+
 	if model == "" {
 		model = "gpt-3.5-turbo"
 	}
@@ -42,7 +66,26 @@ func buildTestRequest(model string) *relaymodel.GeneralOpenAIRequest {
 		Role:    "user",
 		Content: "hi",
 	}
-	testRequest.Messages = append(testRequest.Messages, testMessage)
+	if strings.Contains(model, "vl") || contains(vlModels, model) {
+		testRequest.MaxTokens = 32
+		testRequest.Messages = append(testRequest.Messages, relaymodel.Message{
+			Role: "user",
+			Content: []interface{}{
+				map[string]interface{}{
+					"type": "text",
+					"text": "Analyze picture content",
+				},
+				map[string]interface{}{
+					"type": "image_url",
+					"image_url": map[string]interface{}{
+						"url": "https://ai.bdstatic.com/file/96D2F45674F54D4287EB9FBF9E6AB19A",
+					},
+				},
+			},
+		})
+	} else {
+		testRequest.Messages = append(testRequest.Messages, testMessage)
+	}
 	return testRequest
 }
 
